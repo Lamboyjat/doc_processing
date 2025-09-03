@@ -1,0 +1,12 @@
+# Core Docling dependencies for enhanced document processing
+docling>=2.0.0
+docling-core>=2.0.0
+python-multipart>=0.0.6
+pypdfium2>=4.0.0
+
+# For backward compatibility with original DocumentProcessor
+PyPDF2>=3.0.0
+python-docx>=1.0.0
+
+# Optional: for vector database integration
+llama-stack-client>=0.0.1

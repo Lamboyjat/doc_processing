@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+.env
+build/
+*.egg
+*.egg-info/
+
+.venv/
+.vscode/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+
+/data/*.pdf
+/data/*.txt
+/data/*.html
+/data/*.md
+/data/*.json
+/data/*.csv
+/data/*.xlsx
+/data/*.xls
+/data/*.docx
+/data/*.doc
