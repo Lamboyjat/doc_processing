@@ -68,9 +68,6 @@ result = processor.process_document("your_document.pdf")
 # Install core dependencies
 pip install -r requirements.txt
 
-# Install fast processing libraries
-pip install PyMuPDF pdfplumber
-
 # Activate virtual environment (if using)
 .venv\Scripts\activate  # Windows
 source .venv/bin/activate  # Linux/Mac
@@ -78,7 +75,7 @@ source .venv/bin/activate  # Linux/Mac
 
 ## 📊 Performance Comparison
 
-**Your 150-page PDF test results:**
+**150-page PDF test results:**
 - **Original Docling**: 368 seconds (6+ minutes)
 - **PyMuPDF**: 0.25 seconds (1,459x faster)
 - **pdfplumber**: 8.9 seconds (41x faster, includes 51 tables)
