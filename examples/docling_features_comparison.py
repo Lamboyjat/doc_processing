@@ -1,8 +1,11 @@
 """
 Detailed comparison of what features are preserved in each Docling optimization mode.
 """
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from optimized_docling_converter import OptimizedDoclingConverter
+from src.optimized_docling_converter import OptimizedDoclingConverter
 
 def show_feature_comparison():
     """Show detailed feature comparison across all Docling modes."""

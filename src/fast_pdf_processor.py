@@ -142,7 +142,7 @@ class FastPDFProcessor:
         
         metadata = {
             "file_path": file_path,
-            "file_type": ".pdf",
+            "file_type": os.path.splitext(file_path)[1].lower(), #Path(file_path).suffix, # Extract extension from file path or using pathlib
             "file_size": result["file_size"],
             "processing_method": f"fast_{self.backend}",
             "processing_time_seconds": result["processing_time_seconds"],
@@ -175,19 +175,6 @@ class FastPDFProcessor:
         }
 
 
-def install_dependencies():
-    """Helper function to install fast processing dependencies."""
-    install_commands = [
-        "pip install PyMuPDF",  # Fastest
-        "pip install pdfplumber",  # Good for tables
-        "pip install pypdf2",  # Alternative
-    ]
-    
-    print("To install fast PDF processing dependencies, run:")
-    for cmd in install_commands:
-        print(f"  {cmd}")
-
-
 if __name__ == "__main__":
     # Quick benchmark
     pdf_path = "data/wartsila46f-project-guide.pdf"
@@ -196,7 +183,7 @@ if __name__ == "__main__":
         print("Fast PDF Processing Benchmark")
         print("=" * 40)
         
-        # Test PyMuPDF if available
+        # Test PyMuPDF
         if fitz:
             processor = FastPDFProcessor("pymupdf")
             result = processor.process_document(pdf_path)
@@ -204,7 +191,7 @@ if __name__ == "__main__":
             print(f"Pages: {result.get('page_count', 0)}")
             print(f"Content: {result.get('content_length', 0)} chars")
         
-        # Test pdfplumber if available
+        # Test pdfplumber
         if pdfplumber:
             processor = FastPDFProcessor("pdfplumber")
             result = processor.process_document(pdf_path)
@@ -212,4 +199,4 @@ if __name__ == "__main__":
             print(f"Tables found: {len(result.get('tables', []))}")
     else:
         print(f"Test file not found: {pdf_path}")
-        install_dependencies()
+

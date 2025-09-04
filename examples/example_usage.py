@@ -4,8 +4,12 @@ Example usage of the Enhanced Document Processor.
 This file demonstrates how to use the EnhancedDocumentProcessor to process
 documents with Docling and preserve metadata including bounding boxes.
 """
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from enhanced_document_processor import EnhancedDocumentProcessor
+
+from src.enhanced_document_processor import EnhancedDocumentProcessor
 import os
 
 

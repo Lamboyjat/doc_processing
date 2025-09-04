@@ -24,8 +24,8 @@ except ImportError:
             self.mime_type = mime_type
             self.metadata = metadata or {}
 
-from docling_converter import DoclingConverter
-from formatters import HTMLFormatter, MarkdownFormatter
+from .docling_converter import DoclingConverter
+from .formatters import HTMLFormatter, MarkdownFormatter
 
 
 class EnhancedDocumentProcessor:

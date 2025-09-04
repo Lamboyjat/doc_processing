@@ -1,10 +1,13 @@
 """
 Speed Comparison Demo - Fast vs Current Docling Processing
 """
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
-from fast_pdf_processor import FastPDFProcessor
-from enhanced_document_processor import EnhancedDocumentProcessor
+from src.fast_pdf_processor import FastPDFProcessor
+from src.enhanced_document_processor import EnhancedDocumentProcessor
 
 def compare_processing_speeds():
     """Compare processing speeds between fast and current methods."""

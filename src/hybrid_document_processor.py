@@ -10,8 +10,8 @@ import os
 from typing import Optional, Dict, Any, List, Literal
 from pathlib import Path
 
-from optimized_docling_converter import OptimizedDoclingConverter
-from fast_pdf_processor import FastPDFProcessor
+from .optimized_docling_converter import OptimizedDoclingConverter
+from .fast_pdf_processor import FastPDFProcessor
 
 try:
     from llama_stack_client import RAGDocument
