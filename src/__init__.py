@@ -5,10 +5,10 @@ This package provides optimized document processing capabilities with multiple
 processing strategies for different use cases.
 """
 
-from .enhanced_document_processor import EnhancedDocumentProcessor
-from .fast_pdf_processor import FastPDFProcessor
-from .optimized_docling_converter import OptimizedDoclingConverter
-from .hybrid_document_processor import HybridDocumentProcessor
+from .enhanced.enhanced_document_processor import EnhancedDocumentProcessor
+from .core.fast_pdf_processor import FastPDFProcessor
+from .core.optimized_docling_converter import OptimizedDoclingConverter
+from .core.hybrid_document_processor import HybridDocumentProcessor
 
 __version__ = "1.0.0"
 

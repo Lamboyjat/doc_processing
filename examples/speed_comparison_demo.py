@@ -6,8 +6,8 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import time
-from src.fast_pdf_processor import FastPDFProcessor
-from src.enhanced_document_processor import EnhancedDocumentProcessor
+from src.core.fast_pdf_processor import FastPDFProcessor
+from src.enhanced.enhanced_document_processor import EnhancedDocumentProcessor
 
 def compare_processing_speeds():
     """Compare processing speeds between fast and current methods."""
@@ -50,9 +50,35 @@ def compare_processing_speeds():
     # Original Docling processing (we'll estimate based on your results)
     print("3. Original Docling Processing (Full Features)")
     print("-" * 40)
-    original_time = 368  # From your terminal output
+    # Initialize processor with HTML output
+    processor = EnhancedDocumentProcessor(
+        output_format='html',
+        preserve_images=True,
+        preserve_tables=True,
+        enable_ocr=False
+    )
+    # original_time = 368  # From your terminal output
+    start_time = time.time()
+    docling_result = processor.create_rag_document_from_file(pdf_path)
+    original_time = time.time() - start_time
     print(f"Processing time: {original_time} seconds ({original_time/60:.1f} minutes)")
     print("Features: Text + Tables + Images + Layout + Metadata")
+    if docling_result:
+        # Handle RAGDocument as either dict (from llama_stack_client) or object (fallback)
+        doc_id = docling_result['document_id'] if isinstance(docling_result, dict) else docling_result.document_id
+        mime_type = docling_result['mime_type'] if isinstance(docling_result, dict) else docling_result.mime_type
+        metadata = docling_result['metadata'] if isinstance(docling_result, dict) else docling_result.metadata
+        content = docling_result['content'] if isinstance(docling_result, dict) else docling_result.content
+        
+        print(f"Processed document: {doc_id}")
+        print(f"Content type: {mime_type}")
+        print(f"Metadata keys: {list(metadata.keys())}")
+        print(f"Has images: {metadata['docling_metadata']['has_images']}")
+        print(f"Has tables: {metadata['docling_metadata']['has_tables']}")
+        print(f"Page count: {metadata['docling_metadata']['page_count']}")
+
+        # Print first 500 characters of content
+        print(f"\nContent preview:\n{content[:500]}...")
     print()
     
     # Speed comparisons

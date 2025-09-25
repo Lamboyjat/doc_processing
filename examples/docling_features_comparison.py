@@ -1,160 +1,260 @@
 """
-Detailed comparison of what features are preserved in each Docling optimization mode.
+Dynamic comparison of actual performance and features across Docling optimization modes.
 """
 import sys
 import os
+import time
+from pathlib import Path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.optimized_docling_converter import OptimizedDoclingConverter
+# Disable GPU warnings for CPU-only processing
+os.environ['DOCLING_CPU_ONLY'] = '1'
 
-def show_feature_comparison():
-    """Show detailed feature comparison across all Docling modes."""
+try:
+    from src.core.optimized_docling_converter import OptimizedDoclingConverter
+    DOCLING_AVAILABLE = True
+except ImportError as e:
+    print(f"Docling not available: {e}")
+    print("Showing theoretical comparison instead.")
+    DOCLING_AVAILABLE = False
+
+def measure_mode_performance(pdf_path: str):
+    """Measure actual performance and feature extraction for each Docling mode."""
     
-    print("Optimized Docling Feature Preservation Comparison")
+    print("Dynamic Docling Mode Performance Comparison")
     print("=" * 60)
+    print(f"Test file: {pdf_path}")
+    print(f"File exists: {Path(pdf_path).exists()}")
     print()
     
-    # Feature matrix
-    features = {
-        "Text Extraction": {
-            "fastest": "✓ Full text content",
-            "fast": "✓ Full text content", 
-            "balanced": "✓ Full text content",
-            "quality": "✓ Full text content"
-        },
-        "Document Structure": {
-            "fastest": "✓ Basic paragraphs/headings",
-            "fast": "✓ Structured elements",
-            "balanced": "✓ Full document structure", 
-            "quality": "✓ Full document structure"
-        },
-        "Table Detection": {
-            "fastest": "✗ No table detection",
-            "fast": "✓ Fast table detection",
-            "balanced": "✓ Accurate table detection",
-            "quality": "✓ Highest accuracy tables"
-        },
-        "Table Cell Matching": {
-            "fastest": "✗ No cell matching",
-            "fast": "✓ Basic cell relationships",
-            "balanced": "✓ Full cell relationships",
-            "quality": "✓ Precise cell matching"
-        },
-        "Table Images": {
-            "fastest": "✗ No table images",
-            "fast": "✗ No table images",
-            "balanced": "✓ Table screenshots",
-            "quality": "✓ High-quality table images"
-        },
-        "Picture/Image Extraction": {
-            "fastest": "✗ No images extracted",
-            "fast": "✗ No images extracted",
-            "balanced": "✓ All images with metadata",
-            "quality": "✓ All images with metadata"
-        },
-        "Bounding Boxes": {
-            "fastest": "✓ Text element positions",
-            "fast": "✓ Text + table positions",
-            "balanced": "✓ All element positions",
-            "quality": "✓ Precise positioning"
-        },
-        "OCR for Scanned Content": {
-            "fastest": "✗ No OCR",
-            "fast": "✗ No OCR",
-            "balanced": "✗ No OCR",
-            "quality": "✓ Full OCR processing"
-        },
-        "Page Layout": {
-            "fastest": "✓ Basic layout info",
-            "fast": "✓ Enhanced layout",
-            "balanced": "✓ Complete layout",
-            "quality": "✓ Detailed layout analysis"
-        },
-        "Metadata Preservation": {
-            "fastest": "✓ Basic metadata",
-            "fast": "✓ Enhanced metadata",
-            "balanced": "✓ Rich metadata",
-            "quality": "✓ Complete metadata"
-        }
-    }
+    if not Path(pdf_path).exists():
+        print(f"ERROR: Test file not found: {pdf_path}")
+        print("Please ensure you have a PDF file in the data/ directory.")
+        return
+    
+    modes = ["fastest", "fast", "balanced", "quality"]
+    results = {}
+    
+    # Test each mode
+    for mode in modes:
+        print(f"Testing {mode.upper()} mode...")
+        print("-" * 30)
+        
+        try:
+            # Create converter and do single conversion
+            converter = OptimizedDoclingConverter(mode)
+            start_time = time.time()
+            conversion_result = converter.convert_document(pdf_path)
+            processing_time = time.time() - start_time
+            
+            if conversion_result and conversion_result.document:
+                # Get detailed metadata
+                metadata = converter.extract_document_metadata(conversion_result.document)
+                content = conversion_result.document.export_to_markdown()
+                
+                results[mode] = {
+                    "processing_time": processing_time,
+                    "pages_processed": len(conversion_result.document.pages),
+                    "tables_found": len(metadata.get("tables", [])),
+                    "images_found": len(metadata.get("images", [])),
+                    "has_bounding_boxes": len(metadata.get("bounding_boxes", {})) > 0,
+                    "bbox_count": len(metadata.get("bounding_boxes", {})),
+                    "content_length": len(content),
+                    "elements_by_type": metadata.get("elements_by_type", {}),
+                    "summary": metadata.get("summary", {}),
+                    "success": True
+                }
+                
+                # Print immediate results
+                print(f" Processing time: {results[mode]['processing_time']:.2f}s ({results[mode]['processing_time']/60:.1f} minutes)")
+                print(f" Pages processed: {results[mode]['pages_processed']} pages")
+                print(f" Tables found: {results[mode]['tables_found']} tables")
+                print(f" Images found: {results[mode]['images_found']}")
+                print(f" Bounding boxes: {results[mode]['bbox_count']} elements")
+                print(f" Content length: {results[mode]['content_length']:,} characters")
+                print(f" Elements: {results[mode]['summary']}")
+                
+                # Debug: Test the classify function directly
+                print(f"  Debug: Document type: {type(conversion_result.document)}")
+                print(f"  Debug: Document has {len(conversion_result.document.pages)} pages")
+                
+                # Test classification of first few items
+                print(f"  Debug: Testing classification of first few items:")
+                item_count = 0
+                picture_count = 0
+                table_count = 0
+                text_count = 0
+                
+                for item, level in conversion_result.document.iterate_items():
+                    if item_count < 10:  # Show first 10 items
+                        item_type = type(item).__name__
+                        has_prov = hasattr(item, 'prov') and item.prov
+                        
+                        # Test if it's a picture
+                        is_picture = "PictureItem" in item_type
+                        # Test if it's a table  
+                        is_table = "TableItem" in item_type
+                        # Test if it's text
+                        is_text = "TextItem" in item_type
+                        
+                        # Get the text content from the item
+                        item_text = getattr(item, 'text', '') or ''
+                        text_preview = item_text[:50] + "..." if len(item_text) > 50 else item_text
+                        print(f"    Item {item_count}: {item_type}, picture={is_picture}, table={is_table}, text={is_text}, has_prov={has_prov}")
+                        if item_text:
+                            print(f"      Content: '{text_preview}'")
+                        
+                        if is_picture:
+                            picture_count += 1
+                        elif is_table:
+                            table_count += 1
+                        elif is_text:
+                            text_count += 1
+                    
+                    item_count += 1
+                    if item_count >= 200:  # Count more items
+                        break
+                        
+                print(f"  Debug: From first 200 items - Pictures: {picture_count}, Tables: {table_count}, Text: {text_count}")
+                print(f"  Debug: Total items counted: {item_count}")
+                
+            else:
+                results[mode] = {
+                    "success": False,
+                    "error": "Conversion failed - no document returned"
+                }
+                print(f" Failed: {results[mode]['error']}")
+                
+        except Exception as e:
+            results[mode] = {
+                "success": False,
+                "error": str(e)
+            }
+            print(f" Exception: {e}")
+        
+        print()
     
     # Print comparison table
-    modes = ["fastest", "fast", "balanced", "quality"]
+    print("PERFORMANCE COMPARISON TABLE")
+    print("=" * 80)
     
     # Header
-    print(f"{'Feature':<25} | {'Fastest':<20} | {'Fast':<20} | {'Balanced':<20} | {'Quality':<20}")
-    print("-" * 110)
+    header = f"{'Metric':<20} | {'Fastest':<12} | {'Fast':<12} | {'Balanced':<12} | {'Quality':<12}"
+    print(header)
+    print("-" * len(header))
     
-    # Features
-    for feature, mode_data in features.items():
-        row = f"{feature:<25} |"
+    # Metrics to compare
+    metrics = [
+        ("Processing Time", "processing_time", "s", ".2f"),
+        ("Pages Processed", "pages_processed", "", "d"),
+        ("Tables Found", "tables_found", "", "d"),
+        ("Images Found", "images_found", "", "d"),
+        ("Bounding Boxes", "bbox_count", "", "d"),
+        ("Content Length", "content_length", " chars", ",d")
+    ]
+    
+    for metric_name, key, suffix, fmt in metrics:
+        row = f"{metric_name:<20} |"
         for mode in modes:
-            row += f" {mode_data[mode]:<19} |"
+            if results.get(mode, {}).get("success"):
+                value = results[mode].get(key, 0)
+                if fmt == ",d":
+                    formatted = f"{value:,}{suffix}"
+                elif fmt == ".2f":
+                    formatted = f"{value:.2f}{suffix}"
+                else:
+                    formatted = f"{value}{suffix}"
+                row += f" {formatted:<11} |"
+            else:
+                row += f" {'ERROR':<11} |"
         print(row)
     
     print()
-    print("Performance vs Features Trade-off")
-    print("=" * 40)
     
+    # Speed comparison
+    print("SPEED COMPARISON")
+    print("=" * 30)
+    fastest_time = results.get("fastest", {}).get("processing_time", 0)
+    if fastest_time > 0:
+        for mode in modes[1:]:  # Skip fastest as baseline
+            if results.get(mode, {}).get("success"):
+                mode_time = results[mode]["processing_time"]
+                slowdown = mode_time / fastest_time
+                print(f"{mode} vs fastest: {slowdown:.1f}x slower ({mode_time:.2f}s vs {fastest_time:.2f}s)")
+    
+    print()
+    
+    # Feature preservation analysis
+    print("FEATURE PRESERVATION ANALYSIS")
+    print("=" * 40)
     for mode in modes:
-        processor = OptimizedDoclingConverter(mode)
-        info = processor.get_processing_info()
-        print(f"\n{mode.upper()} MODE:")
-        print(f"  Speed: {info['speed']}")
-        print(f"  Features: {', '.join(info['features'])}")
-        print(f"  Best for: {info['use_case']}")
+        if results.get(mode, {}).get("success"):
+            r = results[mode]
+            print(f"\n{mode.upper()} MODE:")
+            print(f"  Time: {r['processing_time']:.2f}s")
+            print(f"  Text extraction: YES ({r['content_length']:,} chars)")
+            print(f"  Table detection: {'YES' if r['tables_found'] > 0 else 'NO'} ({r['tables_found']} found)")
+            print(f"  Image extraction: {'YES' if r['images_found'] > 0 else 'NO'} ({r['images_found']} found)")
+            print(f"  Bounding boxes: {'YES' if r['has_bounding_boxes'] else 'NO'} ({r['bbox_count']} elements)")
+            print(f"  Elements found: {r['elements_by_type']}")
     
-    print()
-    print("What You LOSE by optimizing:")
-    print("-" * 30)
-    print("fastest → fast: No table detection")
-    print("fast → balanced: No images, no table images")  
-    print("balanced → quality: No OCR for scanned documents")
-    
-    print()
-    print("What You KEEP in each mode:")
-    print("-" * 30)
-    print("fastest: Text content, basic structure, bounding boxes")
-    print("fast: + Tables with cell relationships") 
-    print("balanced: + Images, table images, complete layout")
-    print("quality: + OCR for scanned content")
+    return results
 
 
-def demonstrate_preserved_content():
-    """Show what content is actually preserved in practice."""
+def show_usage_recommendations(results):
+    """Show usage recommendations based on actual measurements."""
     
-    pdf_path = "data/wartsila46f-project-guide.pdf"
-    
-    print("\nPractical Content Preservation Demo")
+    print("USAGE RECOMMENDATIONS")
     print("=" * 40)
     
-    try:
-        # Test fastest mode
-        processor = OptimizedDoclingConverter("fastest")
-        result = processor.convert_document(pdf_path)
+    if not any(r.get("success") for r in results.values()):
+        print("No successful results to analyze.")
+        return
+    
+    # Find fastest mode that worked
+    fastest_working = None
+    for mode in ["fastest", "fast", "balanced", "quality"]:
+        if results.get(mode, {}).get("success"):
+            fastest_working = mode
+            break
+    
+    if fastest_working:
+        base_time = results[fastest_working]["processing_time"]
         
-        # Count elements
-        text_elements = 0
-        for item, _ in result.document.iterate_items():
-            if hasattr(item, 'text') and item.text:
-                text_elements += 1
+        print("FOR TEXT SEARCH/INDEXING:")
+        print(f"  → Use {fastest_working.upper()} mode ({base_time:.2f}s)")
+        print(f"  → Gets {results[fastest_working]['content_length']:,} chars of text")
+        print()
         
-        print(f"FASTEST MODE Results:")
-        print(f"  Pages: {len(result.document.pages)}")
-        print(f"  Text elements: {text_elements}")
-        print(f"  Document structure: {type(result.document)}")
-        print(f"  Bounding boxes: {'✓' if any(hasattr(item, 'prov') for item, _ in result.document.iterate_items()) else '✗'}")
+        print("FOR DOCUMENT ANALYSIS WITH TABLES:")
+        for mode in ["fast", "balanced", "quality"]:
+            if results.get(mode, {}).get("success") and results[mode]["tables_found"] > 0:
+                time_ratio = results[mode]["processing_time"] / base_time
+                print(f"  → Use {mode.upper()} mode ({results[mode]['processing_time']:.2f}s, {time_ratio:.1f}x slower)")
+                print(f"  → Extracts {results[mode]['tables_found']} tables")
+                break
+        print()
         
-        # Export sample
-        content = result.document.export_to_markdown()
-        print(f"  Content length: {len(content):,} characters")
-        print(f"  Sample: {content[:200]}...")
-        
-    except Exception as e:
-        print(f"Demo failed: {e}")
-        print("(Requires Docling installation in virtual environment)")
+        print("FOR COMPLETE DOCUMENT UNDERSTANDING:")
+        for mode in ["balanced", "quality"]:
+            if results.get(mode, {}).get("success"):
+                time_ratio = results[mode]["processing_time"] / base_time
+                print(f"  → Use {mode.upper()} mode ({results[mode]['processing_time']:.2f}s, {time_ratio:.1f}x slower)")
+                print(f"  → Gets tables: {results[mode]['tables_found']}, images: {results[mode]['images_found']}")
+                print(f"  → Bounding boxes: {results[mode]['bbox_count']} elements")
+                break
 
 
 if __name__ == "__main__":
-    show_feature_comparison()
-    demonstrate_preserved_content()
+    # Test with default PDF or user-specified file
+    import sys
+    
+    if len(sys.argv) > 1:
+        pdf_path = sys.argv[1]
+    else:
+        pdf_path = "data/wartsila46f-project-guide.pdf" #"data/Alfa Laval LKH.pdf"
+    
+    results = measure_mode_performance(pdf_path)
+    
+    if results:
+        show_usage_recommendations(results)

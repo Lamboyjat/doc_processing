@@ -7,10 +7,9 @@ documents with Docling and preserve metadata including bounding boxes.
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+os.environ['DOCLING_ACCELERATOR_DEVICE'] = 'cuda'  # or 'auto' for automatic detection
 
-
-from src.enhanced_document_processor import EnhancedDocumentProcessor
-import os
+from src.enhanced.enhanced_document_processor import EnhancedDocumentProcessor
 
 
 def example_basic_usage():

@@ -151,8 +151,12 @@ class HybridDocumentProcessor:
                 if self.fast_processor:
                     result = self.fast_processor.create_rag_document(file_path, document_id)
                     if result:
-                        result.metadata["auto_selected_mode"] = mode
-                        result.metadata["total_processing_time"] = time.time() - start_time
+                        if hasattr(result, 'metadata'):
+                            result.metadata["auto_selected_mode"] = mode
+                            result.metadata["total_processing_time"] = time.time() - start_time
+                        elif isinstance(result, dict) and 'metadata' in result:
+                            result['metadata']["auto_selected_mode"] = mode
+                            result['metadata']["total_processing_time"] = time.time() - start_time
                         return result
                 # Fallback to docling fastest
                 mode = "fastest"
@@ -191,8 +195,12 @@ class HybridDocumentProcessor:
                 try:
                     result = self.fast_processor.create_rag_document(file_path, document_id)
                     if result:
-                        result.metadata["fallback_mode"] = "text_only"
-                        result.metadata["original_mode_error"] = str(e)
+                        if hasattr(result, 'metadata'):
+                            result.metadata["fallback_mode"] = "text_only"
+                            result.metadata["original_mode_error"] = str(e)
+                        elif isinstance(result, dict) and 'metadata' in result:
+                            result['metadata']["fallback_mode"] = "text_only"
+                            result['metadata']["original_mode_error"] = str(e)
                         return result
                 except Exception as fallback_error:
                     print(f"Fallback processing also failed: {fallback_error}")
